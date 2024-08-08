@@ -85,9 +85,9 @@ int main(int argc, char** argv)
     // Serial over Lan ports can be created using the following function, change the IP address and port to suit your needs
     // sdk.ports.createSol("SOL1", false, true, Utils::ipToUint(192, 168, 1, 215), 1001);
 
-    serialPort.open("COM2", 115200);
+    serialPort.open("COM6", 115200);
     serialPort2.open("COM3", 115200);
-    char writeBuffer[] = "Hello, Serial Port!";
+    char writeBuffer[] = "$HXXB,WAR,1*CK\r\n";
     int counts_jishu=0;
     while (1)
     {
@@ -101,7 +101,15 @@ int main(int argc, char** argv)
          {
             counts_jishu++;
          }
-        
+       /* if (globalx >= 10)
+        {
+            globalx = 0;
+            serialPort2.write(writeBuffer, strlen(writeBuffer), bytesWritten2);
+        }*/
+      /*  else
+        {
+            counts_jishu++;
+        }*/
         serialPort.read(readBuffer1, sizeof(readBuffer1), bytesRead1);// Sleep for 40ms to limit CPU usage
         if (bytesRead1 > 0)
         {

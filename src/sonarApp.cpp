@@ -459,6 +459,7 @@ void SonarApp::callbackPingData(Sonar& iss360, const Sonar::Ping& ping)
         // 记录数据到文件
         recordPingData(iss360, ping,  txPulseLengthMm);
         m_pingCount++;
+ 
        // sendUartData("COM4", 115200, data1);
         if (m_pingCount % (Sonar::maxAngle / iss360.settings.setup.stepSize) == 0)
         {
@@ -555,7 +556,7 @@ void SonarApp::recordPingData(const Sonar& iss360, const Sonar::Ping& ping,uint_
     //        });
     //}
     globalcount = temp_ping_.data_count;
-    globalx = 1;
+    //globalx = 1;
     uint8_t minrange = temp_ping_.minRange;
     uint8_t maxrange = temp_ping_.max_range;
 
