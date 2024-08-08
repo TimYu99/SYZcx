@@ -1,0 +1,24 @@
+// global.cpp
+
+#include "global.h"
+
+// 全局变量定义
+uint16_t globalPn = 0;
+uint16_t globalSn = 0;
+uint8_t globalstatus = 0x0F;
+uint16_t globalangle = 0;
+uint8_t globalspeed = 0;
+uint8_t globalminrange = 0;
+uint8_t globalmaxrange = 0;
+int globalcount = 0;
+int globalx = 0;
+int count_0_9999;
+int count_10000_19999;
+int count_20000_29999;
+int count_30000_39999;
+int count_40000_49999;
+int count_50000_59999;
+int count_60000_65535;
+int Accumulate;
+int thereold;
+char sendBuffer[256]="";
