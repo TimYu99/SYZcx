@@ -69,6 +69,13 @@ void App::callbackConnect(Device& device)
     // 保存设备信息到全局变量
     globalPn = device.info.pn;
     globalSn = device.info.sn;
+    if (globalPn == 2255 && globalSn == 10)
+    {
+        globalstatus = 0x01; // 设置 Bit0 为 1
+    }
+    else {
+        globalstatus = 0x0F; // 设成默认值
+    }
     connectEvent(device);
 }
 //--------------------------------------------------------------------------------------------------

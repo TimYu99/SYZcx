@@ -153,7 +153,8 @@ namespace msis_pkg
 //--------------------------------------------------------------------------------------------------
 SonarApp::SonarApp(void) : App("SonarApp"), m_pingCount(0), m_scanning(false), sequenceNumber_(1)
 {
-    setDataFolder("G:\\508 Project\\cunshu121");
+    //setDataFolder("G:\\508 Project\\cunshu121");
+    setDataFolder("C:\\ceshi"); 
     header = "$SMSNXX";
     length = 28;  // 计算消息长度，排除结束符
     initializeTime();
@@ -163,11 +164,6 @@ SonarApp::SonarApp(void) : App("SonarApp"), m_pingCount(0), m_scanning(false), s
     reserved = 0;
     end1 = 0x0D;    // CR
     end2 = 0x0A;    // LF
-    /*msis_pkg::RangeImageBeam rangeImageBeam;
-    //rangeImageBeam.angle_du = 0.0f;
-    rangeImageBeam.angle_stepSize = 0.0f;
-    rangeImageBeam.minRange = 0.0f;
-    rangeImageBeam.max_range = 0.0f;*/
     Debug::log(Debug::Severity::Notice, name.c_str(), "created" NEW_LINE
         "d -> Set settings to defualt" NEW_LINE
         "s -> Save settings to file" NEW_LINE
@@ -495,14 +491,8 @@ void SonarApp::callbackPwrAndTemp(Sonar& iss360, const Sonar::CpuPowerTemp& data
 
 
 void SonarApp::recordPingData(const Sonar& iss360, const Sonar::Ping& ping,uint_t txPulseLengthMm)
-{/* if (!m_outputFile.is_open() || !m_scanning)
-    {
-        std::cerr << "Error: Unable to record ping data. File is not open or scanning has not started." << std::endl;
-        return;
-    }*/
-   // chuanshusmsn_fig = 1;
-
-   Device::Info adevice;
+{
+    Device::Info adevice;
     msis_pkg::RangeImageBeam temp_ping_;
     temp_ping_.angle_du = float(ping.angle) * 360 / 12800;
     temp_ping_.angle_stepSize = float(ping.stepSize) * 360 / 12800;
@@ -513,6 +503,7 @@ void SonarApp::recordPingData(const Sonar& iss360, const Sonar::Ping& ping,uint_
     for (int i_ = 0; i_ < ping.data.size(); i_++) {
         temp_ping_.beam_data.push_back(ping.data[i_]);
     }
+    
     // 获取当前时间戳
     auto now = std::chrono::system_clock::now();
     std::time_t timestamp = std::chrono::system_clock::to_time_t(now);
@@ -563,8 +554,10 @@ void SonarApp::recordPingData(const Sonar& iss360, const Sonar::Ping& ping,uint_
     //        return value > 100; // 示例条件：值大于 100 表示有目标
     //        });
     //}
-    uint8_t minrange = static_cast<uint8_t>(ping.minRangeMm /1000);
-    uint8_t maxrange = static_cast<uint8_t>(ping.maxRangeMm/ 1000);
+    globalcount = temp_ping_.data_count;
+    globalx = 1;
+    uint8_t minrange = temp_ping_.minRange;
+    uint8_t maxrange = temp_ping_.max_range;
 
 
 
