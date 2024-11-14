@@ -36,8 +36,8 @@ namespace IslSdk
             static const uint_t profilerSize = 22;
 
         public:
-            Device::UartMode uartMode;          ///< Serial port mode.
-            uint32_t baudrate;                  ///< Serial port baudrate. Limits are standard bauds between 9600 and 921600
+            Device::UartMode uartMode;          ///< 串口模式。
+            uint32_t baudrate;                  ///< 串行端口波特率。限制为 9600 至 921600 之间的标准波特率
             uint32_t ipAddress;                 ///< IPv4 address. 192.168.1.200 = 0xc801A8c0
             uint32_t netmask;                   ///< IPv4 netmask. 255.255.255.0 = 0x00ffffff
             uint32_t gateway;                   ///< IPv4 gateway. 192.168.1.1 = 0x0101A8c0
@@ -167,13 +167,13 @@ namespace IslSdk
             Ping() : angle(0), stepSize(0), minRangeMm(0), maxRangeMm(0) {}
         };
 
-        struct Echos                            /// This is a list of echos received from the device on each ping. This is the profiling data.
+        struct Echos                            /// 这是每次ping时从设备接收到的回声列表. 这是分析数据.
         {
             struct Echo
             {
-                real_t totalTof;                ///< Total time of flight in seconds to the target and back
-                real_t correlation;             ///< How well the received echo correlates 0 to 1
-                real_t signalEnergy;            ///< Normalised energy level of the echo 0 to 1
+                real_t totalTof;                ///< 往返目标的总飞行时间（秒）
+                real_t correlation;             ///< 接收到的回声与0到1的相关性有多好
+                real_t signalEnergy;            ///< 回波的归一化能级为0到1
                 Echo() : totalTof(0), correlation(0), signalEnergy(0) {}
                 Echo(real_t totalTof, real_t correlation, real_t signalEnergy) : totalTof(totalTof), correlation(correlation), signalEnergy(signalEnergy) {}
             };

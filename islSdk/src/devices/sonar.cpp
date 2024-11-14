@@ -29,7 +29,7 @@ Sonar::~Sonar()
 {
 }
 //--------------------------------------------------------------------------------------------------
-void Sonar::setSensorRates(const SensorRates& rates)
+void Sonar::setSensorRates(const SensorRates& rates)//设置传感器速率
 {
     m_requestedRates = rates;
 
@@ -991,7 +991,7 @@ Sonar::System::System()
 void Sonar::System::defaults()
 {
     uartMode = Device::UartMode::Rs232;
-    baudrate = 9600;
+    baudrate = 115200;
     ipAddress = Utils::ipToUint(192, 168, 1, 200);
     netmask = Utils::ipToUint(255, 255, 255, 0);
     gateway = Utils::ipToUint(192, 168, 1, 1);

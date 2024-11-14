@@ -85,22 +85,41 @@ int main(int argc, char** argv)
     // Serial over Lan ports can be created using the following function, change the IP address and port to suit your needs
     // sdk.ports.createSol("SOL1", false, true, Utils::ipToUint(192, 168, 1, 215), 1001);
 
-    serialPort.open("COM6", 115200);
-    serialPort2.open("COM3", 115200);
+    serialPort.open("COM1", 115200);
+    serialPort2.open("COM2", 115200);
     char writeBuffer[] = "$HXXB,WAR,1*CK\r\n";
+    char sendBuffer1[] = "$SMSNNXX,NoReflectmessage\r\n";
     int counts_jishu=0;
+    int counts_gengxin = 0;
     while (1)
     {
         Platform::sleepMs(40);
         if (counts_jishu >= 10)
         {
            counts_jishu = 0;
+           if (sendBuffer[0] == '\0')
+           {
+            serialPort.write(sendBuffer1, 28, bytesWritten1);
+           }
+           else
+           {
            serialPort.write(sendBuffer, 28, bytesWritten1);
+           }
         }
          else
          {
             counts_jishu++;
          }
+        if (counts_gengxin >= 10)
+        {
+            counts_gengxin = 0;
+            sdk.ports.onNew.connect(slotNewPort);
+            sdk.devices.onNew.connect(slotNewDevice);
+                    }
+        else
+        {
+            counts_gengxin++;
+        }
        /* if (globalx >= 10)
         {
             globalx = 0;
@@ -372,7 +391,7 @@ void processSYZCommand(const std::string& command) {
     }
     else if (command.find("$SMSN,ZL2,1") != std::string::npos) {
         reply = "$SMSN,ZL2,0*";
-        reply = "$SMSN,ONOK,1*";
+        //reply = "$SMSN,ONOK,1*";
         reply += calculateChecksum(reply) + "\r\n";
         sendReply("COM6", reply);
         reply432 = "$SMSN,ZL2,1*";
@@ -411,6 +430,22 @@ void processSYZCommand(const std::string& command) {
         reply432 += calculateChecksum(reply432) + "\r\n";
         sendToNextLevel("COM10", reply432);
     }
+    else if (command.find("$HXXB,WAR,1") != std::string::npos) {
+        reply = "$HXXB,REV,1*";
+        reply += calculateChecksum(reply) + "\r\n";
+        sendReply("COM6", reply);
+        reply432 = "$HXXB,WAR,1*";
+        reply432 += calculateChecksum(reply432) + "\r\n";
+        sendToNextLevel("COM10", reply432);
+    }
+    else if (command.find("$HXXB,OFF,1") != std::string::npos) {
+        reply = "$HXXB,REC,1*";
+        reply += calculateChecksum(reply) + "\r\n";
+        sendReply("COM6", reply);
+        reply432 = "$HXXB,OFF,1*";
+        reply432 += calculateChecksum(reply432) + "\r\n";
+        sendToNextLevel("COM10", reply432);
+        }
     else {
         Debug::log(Debug::Severity::Warning, "SonarApp", "Unknown command received: %s", command.c_str());
         return;

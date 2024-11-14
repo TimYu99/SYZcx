@@ -153,8 +153,8 @@ namespace msis_pkg
 //--------------------------------------------------------------------------------------------------
 SonarApp::SonarApp(void) : App("SonarApp"), m_pingCount(0), m_scanning(false), sequenceNumber_(1)
 {
-    //setDataFolder("G:\\508 Project\\cunshu121");
-    setDataFolder("C:\\ceshi"); 
+   // setDataFolder("G:\\508 Project\\20240813\\two");
+   setDataFolder("G:\\ceshi"); 
     header = "$SMSNXX";
     length = 28;  // 计算消息长度，排除结束符
     initializeTime();
@@ -174,12 +174,12 @@ SonarApp::SonarApp(void) : App("SonarApp"), m_pingCount(0), m_scanning(false), s
         "i -> Save sonar image" NEW_LINE
         "q -> FasongDabaoxinxi" NEW_LINE);
 
-    std::thread([this]() {
-        std::this_thread::sleep_for(std::chrono::seconds(1)); // 等待1秒，确保设备已初始化
-        this->doTask('r', dataFolder_); // 开始扫描
-        std::this_thread::sleep_for(std::chrono::minutes(4)); // 等待4分钟
-        this->doTask('R', dataFolder_); // 停止扫描
-        }).detach();
+    //std::thread([this]() {
+    //    std::this_thread::sleep_for(std::chrono::seconds(1)); // 等待1秒，确保设备已初始化
+    //    this->doTask('r', dataFolder_); // 开始扫描
+    //    std::this_thread::sleep_for(std::chrono::minutes(4)); // 等待4分钟
+    //    this->doTask('R', dataFolder_); // 停止扫描
+    //    }).detach();
 
 }
 
@@ -392,7 +392,7 @@ void SonarApp::callbackAhrs(Ahrs& ahrs, uint64_t timeUs, const Quaternion& q, re
 {
     EulerAngles euler = q.toEulerAngles(0);
 
-    Debug::log(Debug::Severity::Info, name.c_str(), "H:%.1f    P:%.2f    R%.2f", Math::radToDeg(euler.heading), Math::radToDeg(euler.pitch), Math::radToDeg(euler.roll));
+   Debug::log(Debug::Severity::Info, name.c_str(), "H:%.1f    P:%.2f    R%.2f", Math::radToDeg(euler.heading), Math::radToDeg(euler.pitch), Math::radToDeg(euler.roll));
 }
 //--------------------------------------------------------------------------------------------------
 void SonarApp::callbackGyroData(GyroSensor& gyro, const Vector3& v)
@@ -457,7 +457,7 @@ void SonarApp::callbackPingData(Sonar& iss360, const Sonar::Ping& ping)
 
         sonarDataStore.add(ping, txPulseLengthMm);
         // 记录数据到文件
-        recordPingData(iss360, ping,  txPulseLengthMm);
+        recordPingData(iss360, ping, txPulseLengthMm);
         m_pingCount++;
  
        // sendUartData("COM4", 115200, data1);

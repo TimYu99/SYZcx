@@ -73,6 +73,10 @@ void App::callbackConnect(Device& device)
     {
         globalstatus = 0x01; // 设置 Bit0 为 1
     }
+    else if (globalPn == 2254 && globalSn == 25)
+    {
+        globalstatus = 0x02; // 设置 Bit0 为 1
+    }
     else {
         globalstatus = 0x0F; // 设成默认值
     }
