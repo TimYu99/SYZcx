@@ -19,6 +19,13 @@ int count_30000_39999;
 int count_40000_49999;
 int count_50000_59999;
 int count_60000_65535;
+
 int Accumulate;
 int thereold;
 char sendBuffer[256]="";
+// 全局变量定义目标判别时的标志和初始化
+int flag_shanxing = 0;   // 默认关闭
+int flag_target = 0;     // 默认未检测到目标
+int flag_zhiling = 1;    // 默认未执行指令
+//计数器
+int jishu_shanxing =0;

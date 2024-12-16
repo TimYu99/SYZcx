@@ -22,6 +22,7 @@
 #include <thread> // 包含线程库
 #include <windows.h> // 包含 Windows API 头文件
 #include <mutex>
+#include <opencv2/opencv.hpp>
 //#include "global.h"
 // 在类中添加一个标志来表示是否开始了 ping data 的记录
 bool isRecording = false;
@@ -29,9 +30,19 @@ std::string dataFolder_;  // 文件夹路径
 using namespace IslSdk;
 unsigned char mesbag[28] = { 0 };
 std::mutex uartMutex;
+const int ROWS = 152; // 行数
+const int COLS = 20;  // 列数
+float shanxing[ROWS][COLS] = { 0 }; // 初始化为 0
+float frame1[ROWS][COLS] = { 0 }; // 初始化为 0
+float frame2[ROWS][COLS] = { 0 }; // 初始化为 0
+float* currentFrame = &frame1[0][0]; // 指向 frame1 的首地址
+float* nextFrame = &frame2[0][0];   // 指向 frame2 的首地址
 // 定义全局变量
 Message  msg;
-
+extern SerialPort serialPort2; // 声明全局变量
+int bytesWritten12;
+char writeBufferjinggao[] = "$HXXB,WAR,1*CK\r\n";
+char writeBufferxiaoshi[] = "$HXXB,OFF,1*CK\r\n";
 std::string IslSdk::messageToString(const Message& msg)
 {
     std::ostringstream oss;
@@ -60,7 +71,8 @@ std::string IslSdk::messageToString(const Message& msg)
     return oss.str();
 }
 
-SerialPort::SerialPort() {
+SerialPort::SerialPort() 
+{
     hComm = INVALID_HANDLE_VALUE;
     SecureZeroMemory(&dcbSerialParams, sizeof(DCB));
     SecureZeroMemory(&timeouts, sizeof(COMMTIMEOUTS));
@@ -123,11 +135,7 @@ bool SerialPort::read(char* buffer, int bufferSize, int& bytesRead) {
 bool SerialPort::write(const char* buffer, int bufferSize, int& bytesWritten) {
     return WriteFile(hComm, buffer, bufferSize, (LPDWORD)&bytesWritten, NULL);
 }
-std::vector<uint8_t> data1 =
-{
-   0x24, 0x53, 0x4d, 0x53, 0x4e, 0x58, 0x58, 0x1c, 0x00, 0xe8, 0x07, 0x06, 0x19, 0x15, 0x01,
-   0x28, 0x0f, 0x5a, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0xe8, 0x03, 0x0d, 0x0a
-};
+
 namespace msis_pkg 
 {
 
@@ -154,7 +162,7 @@ namespace msis_pkg
 SonarApp::SonarApp(void) : App("SonarApp"), m_pingCount(0), m_scanning(false), sequenceNumber_(1)
 {
    // setDataFolder("G:\\508 Project\\20240813\\two");
-   setDataFolder("G:\\ceshi"); 
+    setDataFolder("D:\\ceshi"); 
     header = "$SMSNXX";
     length = 28;  // 计算消息长度，排除结束符
     initializeTime();
@@ -173,13 +181,18 @@ SonarApp::SonarApp(void) : App("SonarApp"), m_pingCount(0), m_scanning(false), s
         "t -> Save sonar texture" NEW_LINE
         "i -> Save sonar image" NEW_LINE
         "q -> FasongDabaoxinxi" NEW_LINE);
-
+    //自动运行
     //std::thread([this]() {
+    //    while(true){
     //    std::this_thread::sleep_for(std::chrono::seconds(1)); // 等待1秒，确保设备已初始化
     //    this->doTask('r', dataFolder_); // 开始扫描
     //    std::this_thread::sleep_for(std::chrono::minutes(4)); // 等待4分钟
     //    this->doTask('R', dataFolder_); // 停止扫描
+    //    std::this_thread::sleep_for(std::chrono::minutes(1)); // 等待4分钟
+    //    }
     //    }).detach();
+    //std::this_thread::sleep_for(std::chrono::seconds(1)); // 等待1秒，确保设备已初始化
+    //doTask('r', dataFolder_); // 开始扫描
 
 }
 
@@ -273,7 +286,7 @@ void SonarApp::doTask(int_t key, const std::string& path)
     if (m_device)
     {
         Sonar& sonar = reinterpret_cast<Sonar&>(*m_device);
-
+        //SerialPort serialPort;
         switch (key)
         {
         case 'd':
@@ -350,7 +363,7 @@ void SonarApp::doTask(int_t key, const std::string& path)
             break;
 
         case 'i':
-            m_circular.render(sonarDataStore, m_palette, true);
+            m_circular.render(sonarDataStore, m_palette, true);//(渲染)
             BmpFile::save(path + "texture.bmp", reinterpret_cast<const uint32_t*>(&m_circular.buf[0]), 32, m_circular.width, m_circular.height);
             break;
 
@@ -364,6 +377,10 @@ void SonarApp::doTask(int_t key, const std::string& path)
             //uint32_t baudrate = 115200; // 根据需要调整波特率
 
             //sendUartData("COM6", 115200, data1);
+            
+            //serialPort22.open("COM2", 115200);
+
+            serialPort2.write(writeBufferjinggao, 16, bytesWritten12);
             break;
 
         default:
@@ -464,6 +481,9 @@ void SonarApp::callbackPingData(Sonar& iss360, const Sonar::Ping& ping)
         if (m_pingCount % (Sonar::maxAngle / iss360.settings.setup.stepSize) == 0)
         {
             m_pingCount = 0;
+      
+
+         
             /*
             m_texture.renderTexture(sonarDataStore, m_palette, false);
             BmpFile::save("snrTex.bmp", reinterpret_cast<const uint32_t*>(&m_texture.buf[0]), 32, m_texture.width, m_texture.height);
@@ -471,6 +491,64 @@ void SonarApp::callbackPingData(Sonar& iss360, const Sonar::Ping& ping)
             m_circular.render(sonarDataStore, m_palette, true);
             BmpFile::save("snrCi.bmp", reinterpret_cast<const uint32_t*>(&m_circular.buf[0]), 32, m_circular.width, m_circular.height);
             */
+        }
+        if (flag_shanxing == 1)
+        {
+            jishu_shanxing = jishu_shanxing + 1;
+            //将矩阵数据转换为图像数据
+            //frame1 = frame2;
+            //std::swap(currentFrame, nextFrame);
+            memcpy(frame1, frame2, sizeof(frame1));
+            memcpy(frame2, shanxing, sizeof(shanxing));
+            /* for (int i = 0; i < ROWS; i++) {
+                 for (int j = 0; j < COLS; j++) {
+                     frame2[i][j] = frame1[i][j];
+                 }
+             }*/
+             //for (int i = 0; i < ROWS; i++) {
+             //    for (int j = 0; j < COLS; j++) {
+             //        frame2[i][j] = shanxing[i][j];
+             //    }
+             //}
+             //frame2 = shanxing;
+            flag_shanxing = 0;
+            // 将二维数组转换为 cv::Mat
+            cv::Mat frame11 = cv::Mat(ROWS, COLS, CV_32FC1, frame1).clone(); // 克隆保证数据独立
+            cv::Mat frame22 = cv::Mat(ROWS, COLS, CV_32FC1, frame2).clone();
+
+            // 归一化到 0~255 方便显示
+            cv::Mat frame11Display, frame22Display;
+            cv::normalize(frame11, frame11Display, 0, 255, cv::NORM_MINMAX, CV_8UC1);
+            cv::normalize(frame22, frame22Display, 0, 255, cv::NORM_MINMAX, CV_8UC1);
+            // 显示图像
+            cv::imshow("Frame11", frame11Display);
+            cv::imshow("Frame22", frame22Display);
+            cv::waitKey(0); // 保持窗口打开
+            //图像处理
+            if(jishu_shanxing > 1)
+            { 
+                //process_frame_difference(frame11，frame22);//数据处理
+            }
+            //报警设置
+            if (flag_target == 1 && flag_zhiling == 1)
+            {
+
+                //serialPort2.open("COM2", 115200);
+               
+                // int bytesWritten1;
+                 //char writeBuffer[] = "$HXXB,WAR,1*CK\r\n";
+                serialPort2.write(writeBufferjinggao, 16, bytesWritten12);
+                flag_zhiling = 0;
+            }
+            if (flag_target == 0 && flag_zhiling == 0)
+            {
+                //SerialPort serialPort;
+                //serialPort22.open("COM2", 115200);
+                //int bytesWritten1;
+               // char writeBuffer[] = "$HXXB,OFF,1*CK\r\n";
+                serialPort2.write(writeBufferxiaoshi, 16, bytesWritten12);
+                flag_zhiling = 1;
+            }
         }
     }
 }
@@ -493,6 +571,13 @@ void SonarApp::callbackPwrAndTemp(Sonar& iss360, const Sonar::CpuPowerTemp& data
 
 void SonarApp::recordPingData(const Sonar& iss360, const Sonar::Ping& ping,uint_t txPulseLengthMm)
 {
+    if (currentCol >= COLS)
+    {
+        std::cerr << "Array full, cannot store more data." << std::endl;
+        currentCol = 0; // 或者重置 currentCol = 0; 来覆盖数据
+        std::memset(shanxing, 0, sizeof(shanxing));
+        std::cerr << "Array clear all data." << std::endl;
+    }
     Device::Info adevice;
     msis_pkg::RangeImageBeam temp_ping_;
     temp_ping_.angle_du = float(ping.angle) * 360 / 12800;
@@ -504,7 +589,30 @@ void SonarApp::recordPingData(const Sonar& iss360, const Sonar::Ping& ping,uint_
     for (int i_ = 0; i_ < ping.data.size(); i_++) {
         temp_ping_.beam_data.push_back(ping.data[i_]);
     }
-    
+
+    // 将 ping.data 存储到 shanxing 数组的当前列
+    for (int i = 0; i < ping.data.size() && i < ROWS; ++i) {
+        shanxing[i][currentCol] = static_cast<float>(ping.data[i]);
+    }
+    // 更新当前列索引
+    currentCol++;
+    if(currentCol==COLS)
+    {
+        //jushu_shanxing++;
+        flag_shanxing = 1;
+        std::cout << "Displaying shanxing matrix:" << std::endl;
+
+        for (int i = 0; i < ROWS; ++i) {
+            for (int j = 0; j < COLS; ++j) {
+                // 设置固定宽度便于观察矩阵结构
+                std::cout << std::setw(5) << shanxing[i][j] << " ";
+            }
+            std::cout << std::endl; // 换行
+        }
+
+        std::cout << "End of matrix display." << std::endl;
+
+    }
     // 获取当前时间戳
     auto now = std::chrono::system_clock::now();
     std::time_t timestamp = std::chrono::system_clock::to_time_t(now);

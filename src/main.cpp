@@ -17,6 +17,7 @@
 #include <string>
 #include <iostream>
 #include "global.h"
+#include "comms/ports/uartPort.h"
 using namespace IslSdk;
 //using namespace std;
 //------------------------------------------- Globals ----------------------------------------------
@@ -26,7 +27,7 @@ std::shared_ptr<GpsApp> gpsApp;
 
 char readBuffer1[256];
 int bytesRead1;
-char writeBuffer[] = "Hello, Serial Port!";
+//char writeBuffer[] = "Hello, Serial Port!";
 int bytesWritten1;
 
 char readBuffer2[256];
@@ -88,18 +89,21 @@ int main(int argc, char** argv)
     serialPort.open("COM1", 115200);
     serialPort2.open("COM2", 115200);
     char writeBuffer[] = "$HXXB,WAR,1*CK\r\n";
-    char sendBuffer1[] = "$SMSNNXX,NoReflectmessage\r\n";
+    char sendBuffer1[] = "No Sonar Message\r\n";
+    char sendBuffer2024[] = "System Ready\r\n";
+    serialPort.write(sendBuffer2024, 15, bytesWritten1);
     int counts_jishu=0;
     int counts_gengxin = 0;
+    int islDiscoveryCounter = 0; // 计数器用于控制 ISL 设备发现的频率
     while (1)
     {
         Platform::sleepMs(40);
-        if (counts_jishu >= 10)
+        if (counts_jishu >= 100)
         {
            counts_jishu = 0;
            if (sendBuffer[0] == '\0')
            {
-            serialPort.write(sendBuffer1, 28, bytesWritten1);
+            serialPort.write(sendBuffer1, 19, bytesWritten1);
            }
            else
            {
@@ -113,8 +117,9 @@ int main(int argc, char** argv)
         if (counts_gengxin >= 10)
         {
             counts_gengxin = 0;
-            sdk.ports.onNew.connect(slotNewPort);
-            sdk.devices.onNew.connect(slotNewDevice);
+            
+            //sdk.ports.onNew.connect(slotNewPort);
+            //std::cout << "已刷新: "  << std::endl;
                     }
         else
         {
@@ -132,10 +137,45 @@ int main(int argc, char** argv)
         serialPort.read(readBuffer1, sizeof(readBuffer1), bytesRead1);// Sleep for 40ms to limit CPU usage
         if (bytesRead1 > 0)
         {
-            std::cout << "接收到数据: " << std::string(readBuffer1, bytesRead1) << std::endl;
+            std::cout << "接收到外部串口数据: " << std::string(readBuffer1, bytesRead1) << std::endl;
             processSYZCommand(readBuffer1);
            // serialPort.write(readBuffer1, bytesRead1, bytesWritten1);
         }
+        serialPort2.read(readBuffer2, sizeof(readBuffer2), bytesRead2);
+        if (bytesRead2 > 0)
+        {
+           
+            std::string reply432read;
+            //std::cout << "接收到432串口数据: " << std::string(readBuffer2, bytesRead2) << std::endl;
+            reply432read = readBuffer2;
+            if (sizeof(reply432read) > 0 && reply432read[0] != '\0')
+            {
+                std::cout << "接收到432串口数据: " << std::string(readBuffer2, bytesRead2) << std::endl;\
+                 if (reply432read.size() < 2 || reply432read.substr(reply432read.size() - 2) != "\r\n")
+                    {
+                        reply432read += "\r\n";
+                    }
+                reply432read = "$432readDSP:" + reply432read;
+                sendReply("COM6", reply432read);
+            }
+            
+            //processSYZCommand(readBuffer2);
+            // serialPort.write(readBuffer1, bytesRead1, bytesWritten1);
+        }
+        // 每隔一段时间调用一次 discoverIslDevices 函数
+        //if (islDiscoveryCounter >= 250) // 250 * 40ms = 10秒
+        //{
+        //    islDiscoveryCounter = 0;
+        //    if (serialPort2.isOpen())
+        //    {
+        //        serialPort2.discoverIslDevices(1234, 5678, 91011); // 使用示例的 PID, PN, SN
+        //        std::cout << "调用 discoverIslDevices 函数" << std::endl;
+        //    }
+        //}
+        //else
+        //{
+        //    islDiscoveryCounter++;
+        //}
         sdk.run();                                                              // Run the SDK. This should be called regularly to process data
        
         if (Platform::keyboardPressed())                                        // Check if a key has been pressed and do some example tasks
@@ -445,6 +485,21 @@ void processSYZCommand(const std::string& command) {
         reply432 = "$HXXB,OFF,1*";
         reply432 += calculateChecksum(reply432) + "\r\n";
         sendToNextLevel("COM10", reply432);
+        }
+    else if (command.find("$SMSN,XINXI,1") != std::string::npos) {
+        reply = "$SMSN,XINXI,0*";
+        reply += calculateChecksum(reply) + "\r\n";
+        sendReply("COM6", reply);
+        if (sendBuffer[0] == '\0')
+               {
+                char sendBuffer1[] = "No Sonar Message\r\n";
+                serialPort.write(sendBuffer1, 19, bytesWritten1);
+               }
+               else
+               {
+               serialPort.write(sendBuffer, 28, bytesWritten1);
+               }
+        
         }
     else {
         Debug::log(Debug::Severity::Warning, "SonarApp", "Unknown command received: %s", command.c_str());

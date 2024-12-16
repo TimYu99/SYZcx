@@ -23,4 +23,10 @@ extern int count_60000_65535;
 extern int Accumulate;
 extern int thereold;
 extern char sendBuffer[256];
+// 标志位
+extern int flag_shanxing;   // 标志位 1: 启用扇形处理, 0: 禁用
+extern int flag_target;     // 标志位 1: 检测到目标, 0: 未检测到
+extern int flag_zhiling;    // 标志位 1: 执行某指令, 0: 未执行指令
+//计数器
+extern int jishu_shanxing;
 #endif // GLOBAL_H

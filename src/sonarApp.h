@@ -132,6 +132,7 @@ namespace IslSdk
         bool m_scanning;
         std::ofstream m_outputFile;
         int sequenceNumber_; // 序号变量
+        int currentCol = 0;// 当前存储的列
 
         void setDataFolder(const std::string& basePath);
         void updatePingDataFilename();
