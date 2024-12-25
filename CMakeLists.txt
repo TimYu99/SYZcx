@@ -41,7 +41,7 @@ set(HEADERS
     src/sonarApp.h
     src/platform.h
     src/gpsApp.h
- "src/global.h" "src/array_data.h")
+ "src/global.h" "src/array_data.h" "src/data_logger.h")
 
 set(SOURCES
     src/main.cpp
@@ -52,8 +52,8 @@ set(SOURCES
     src/sonarApp.cpp
     src/platform.cpp
     src/gpsApp.cpp
- "src/global.cpp" "src/array_data.cpp")
+ "src/global.cpp" "src/array_data.cpp" "src/data_logger.cpp")
 
 add_subdirectory(islSdk)
-add_executable (${PROJECT_NAME} ${SOURCES} ${HEADERS} "src/global.h" "src/global.cpp" "src/array_data.cpp" "src/array_data.h")
+add_executable (${PROJECT_NAME} ${SOURCES} ${HEADERS} "src/global.h" "src/global.cpp" "src/array_data.cpp" "src/array_data.h" "src/data_logger.cpp" "src/data_logger.h")
 target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} islSdk)

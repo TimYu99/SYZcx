@@ -19,7 +19,5 @@ const int cols = 401;
 // º¯ÊýÉùÃ÷
 void printValueAt(int row, int col);
 void subtractArrays(const int arr1[rows][cols], const int arr2[rows][cols], int result[rows][cols]);
-int process_frame_difference(cv::Mat frame1, cv::Mat frame2, int frame_index,
-    std::vector<Centroid>& XX, std::vector<Centroid>& YY,
-    int& large_movement_count, int& no_target);
+int process_frame_difference(cv::Mat frame1, cv::Mat frame2, int& no_target, Centroid& centroid);    
 #endif // ARRAY_DATA_H

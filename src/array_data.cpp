@@ -13,14 +13,20 @@
 std::vector<Centroid> trajectory;
 Centroid last_centroid;
 
-int process_frame_difference(cv::Mat frame1, cv::Mat frame2, int frame_index, std::vector<Centroid>& XX, std::vector<Centroid>& YY, int& large_movement_count, int& no_target)
+//代码流程：
+//计算帧间差异：首先，计算 frame1 和 frame2 的差异图。
+//目标检测：通过二值化和形态学操作去噪后，提取目标区域的质心。
+//位移判断：如果上一帧的质心存在，计算当前帧质心与上一帧的质心之间的距离，判断是否有较大位移。
+//更新上一帧的质心：将当前帧的质心作为下一帧的上一帧质心，供后续使用。
+//参数说明：
+//frame1 和 frame2：两帧图像，表示连续的视频帧。
+//no_target：标记是否检测到目标，0 表示未检测到目标，1 表示检测到目标。
+//centroid：返回的目标质心，包含 x 和 y 坐标。
+int process_frame_difference(cv::Mat frame1, cv::Mat frame2,int& no_target, Centroid& centroid)
 {
+    int large_movement_count=0;
     // 初始化
-    if (frame_index <= 3) {
-        trajectory.clear();
-        last_centroid = { 0, 0 };
-    }
-
+    static Centroid last_centroid = { 0, 0 };  // 记录上一次的质心
     // 计算帧间差异
     cv::Mat diff;
     cv::absdiff(frame2, frame1, diff);
@@ -35,75 +41,78 @@ int process_frame_difference(cv::Mat frame1, cv::Mat frame2, int frame_index, st
     // 二值化差分图像
     cv::Mat binary_image;
     cv::threshold(diff, binary_image, threshold, 255, cv::THRESH_BINARY);
-
+    bool result = cv::imwrite("D:/ceshi/binary_image.png", binary_image);
+    if (result) {
+        std::cout << "binary_image图像已保存到文件夹!" << std::endl;
+    }
+    else {
+        std::cerr << "保存图像失败!" << std::endl;
+    }
     // 后处理：形态学操作去噪
+    cv::Mat cleaned_image1;
+    cv::Mat se1 = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(4, 4));
+    cv::morphologyEx(binary_image, cleaned_image1, cv::MORPH_OPEN, se1);
     cv::Mat cleaned_image;
     cv::Mat se = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
     cv::morphologyEx(binary_image, cleaned_image, cv::MORPH_OPEN, se);
-
+    bool result1 = cv::imwrite("D:/ceshi/cleaned_image.png", cleaned_image);
+    if (result1) {
+        std::cout << "cleaned_image图像已保存到文件夹!" << std::endl;
+    }
+    else {
+        std::cerr << "保存图像失败!" << std::endl;
+    }
+    bool result2 = cv::imwrite("D:/ceshi/cleaned_image1.png", cleaned_image1);
+    if (result2) {
+        std::cout << "cleaned_image1图像已保存到文件夹!" << std::endl;
+    }
+    else {
+        std::cerr << "保存图像失败!" << std::endl;
+    }
     // 去掉小区域
     cv::Mat labeled_image;
-    cv::connectedComponents(cleaned_image, labeled_image);
-
-    // 可视化差分图像
-    cv::imshow("Frame Difference", diff);
-    cv::imshow("Binary Image", binary_image);
-    cv::imshow("Cleaned Image", cleaned_image);
+    int num_labels = cv::connectedComponents(cleaned_image1, labeled_image);
 
     // 获取目标区域的质心
     std::vector<Centroid> centroids;
-    for (int i = 0; i < labeled_image.rows; ++i) {
-        for (int j = 0; j < labeled_image.cols; ++j) {
-            if (labeled_image.at<int>(i, j) > 0) {
-                Centroid c = { static_cast<float>(j), static_cast<float>(i) };
-                centroids.push_back(c);
-            }
+    for (int label = 1; label < num_labels; ++label) {  // 标签从1开始，0是背景
+        cv::Moments moments = cv::moments(labeled_image == label, true);
+        if (moments.m00 > 0) {  // 如果区域面积不为零
+            Centroid c = { static_cast<float>(moments.m10 / moments.m00), static_cast<float>(moments.m01 / moments.m00) };
+            centroids.push_back(c);
         }
     }
 
     // 检查是否检测到目标
     if (centroids.empty()) {
-        std::cout << "No target detected!" << std::endl;
-        no_target = 1;
-        large_movement_count = 0;
+        no_target = 0;  // 没有目标检测到
+        large_movement_count = 0;  // 没有目标时，位移计数清零
         return 0;
     }
 
-    // 如果 trajectory 为空，初始化为当前质心
-    if (trajectory.empty()) {
-        trajectory = centroids;
-        last_centroid = centroids.front();
-        large_movement_count = 0;
-    }
-    else {
-        // 计算当前质心与上一帧质心的距离
-        float min_distance = FLT_MAX;
-        Centroid closest_centroid;
-
-        for (const auto& c : centroids) {
-            float distance = std::sqrt(std::pow(c.x - last_centroid.x, 2) + std::pow(c.y - last_centroid.y, 2));
-            if (distance < min_distance) {
-                min_distance = distance;
-                closest_centroid = c;
-            }
-        }
+    // 选取第一个质心作为目标
+    centroid = centroids.front();
+    no_target = 1;  // 目标已检测到
+    
+    if (last_centroid.x != 0 && last_centroid.y != 0) {  // 如果上一帧存在有效的质心
+        float distance = std::sqrt(std::pow(centroid.x - last_centroid.x, 2) + std::pow(centroid.y - last_centroid.y, 2));
 
         // 判断是否有较大位移
         float large_movement_threshold = 5.0f;  // 5像素阈值
-        if (min_distance > large_movement_threshold) {
-            large_movement_count = 1;
+        if (distance > large_movement_threshold) {
+            large_movement_count = 1;  // 有较大位移
         }
-        else
-        {
-            large_movement_count = 0;
+        else {
+            large_movement_count = 0;  // 位移较小
         }
-
-        trajectory.push_back(closest_centroid);
-        last_centroid = closest_centroid;
     }
-    
+    else {
+        large_movement_count = 0;  // 如果是第一帧，则没有位移
+    }
+    // 更新上一帧的质心
+    last_centroid = centroid;
 
-    no_target = 0;
+    
 
     return 1;
 }

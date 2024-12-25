@@ -27,6 +27,11 @@ extern char sendBuffer[256];
 extern int flag_shanxing;   // 标志位 1: 启用扇形处理, 0: 禁用
 extern int flag_target;     // 标志位 1: 检测到目标, 0: 未检测到
 extern int flag_zhiling;    // 标志位 1: 执行某指令, 0: 未执行指令
+extern int flag_jingzhi;    // 标志位进入运动静止判别 1: 进入静止, 0: 正在运动
+extern int flag_yundong;	// 标志位 1: 正在运动, 0: 静止
+extern int flag_beijing;	// 标志位 1: 与背景比有目标, 0: 与背景比无目标
 //计数器
 extern int jishu_shanxing;
+extern int jishu_guding;
+
 #endif // GLOBAL_H

@@ -4,7 +4,7 @@
 #include "sdk.h"                // The main SDK header. This include most of the SDK functionality
 #include "platform/debug.h"
 #include "utils/utils.h"
-
+#include "data_logger.h"
 // sdkExample includes
 #include "platform.h"
 #include "isa500App.h"
@@ -86,28 +86,49 @@ int main(int argc, char** argv)
     // Serial over Lan ports can be created using the following function, change the IP address and port to suit your needs
     // sdk.ports.createSol("SOL1", false, true, Utils::ipToUint(192, 168, 1, 215), 1001);
 
-    serialPort.open("COM1", 115200);
+    serialPort.open("COM1", 9600);
     serialPort2.open("COM2", 115200);
     char writeBuffer[] = "$HXXB,WAR,1*CK\r\n";
     char sendBuffer1[] = "No Sonar Message\r\n";
     char sendBuffer2024[] = "System Ready\r\n";
-    serialPort.write(sendBuffer2024, 15, bytesWritten1);
+    serialPort.write(sendBuffer2024, 14, bytesWritten1);
+    saveData("D:/ceshi/Seriallog.txt", sendBuffer2024, strlen(sendBuffer2024), "COM1 Send", 0);
     int counts_jishu=0;
     int counts_gengxin = 0;
     int islDiscoveryCounter = 0; // 计数器用于控制 ISL 设备发现的频率
+    //// 指定图像的路径
+    //std::string imagePath = "C:/Users/wzy/Pictures/图片/1DpLhrguCrEH3PMTKaNSE.png";
+
+    //// 读取图像
+    //cv::Mat image = cv::imread(imagePath, cv::IMREAD_COLOR);
+
+    ////// 检查图像是否成功加载
+    //if (image.empty()) {
+    //    std::cerr << "无法加载图像，请检查路径是否正确: " << imagePath << std::endl;
+    //    return -1;
+    //}
+    //// 如果是三通道彩色图像，转换为灰度图像
+    //if (image.channels() == 3) {
+    //    cv::cvtColor(image, image, cv::COLOR_BGR2GRAY);
+    //}
+    //// 显示图像
+    //cv::imshow("Display Image", image);
+    //// 等待用户按键
+    //cv::waitKey(0);
     while (1)
     {
         Platform::sleepMs(40);
-        if (counts_jishu >= 100)
+        if (counts_jishu >= 10)
         {
            counts_jishu = 0;
            if (sendBuffer[0] == '\0')
            {
-            serialPort.write(sendBuffer1, 19, bytesWritten1);
+            serialPort.write(sendBuffer1, 18, bytesWritten1);
            }
            else
            {
            serialPort.write(sendBuffer, 28, bytesWritten1);
+           //saveData("D:/ceshi/output.txt", sendBuffer, 28, "COM1 Send Hex Data", 1);
            }
         }
          else
@@ -138,7 +159,9 @@ int main(int argc, char** argv)
         if (bytesRead1 > 0)
         {
             std::cout << "接收到外部串口数据: " << std::string(readBuffer1, bytesRead1) << std::endl;
+            saveData("D:/ceshi/Seriallog.txt", readBuffer1, strlen(readBuffer1), "COM1 Recieved", 0);
             processSYZCommand(readBuffer1);
+            
            // serialPort.write(readBuffer1, bytesRead1, bytesWritten1);
         }
         serialPort2.read(readBuffer2, sizeof(readBuffer2), bytesRead2);
@@ -150,11 +173,12 @@ int main(int argc, char** argv)
             reply432read = readBuffer2;
             if (sizeof(reply432read) > 0 && reply432read[0] != '\0')
             {
-                std::cout << "接收到432串口数据: " << std::string(readBuffer2, bytesRead2) << std::endl;\
-                 if (reply432read.size() < 2 || reply432read.substr(reply432read.size() - 2) != "\r\n")
-                    {
-                        reply432read += "\r\n";
-                    }
+                std::cout << "接收到432串口数据: " << std::string(readBuffer2, bytesRead2) << std::endl;
+                saveData("D:/ceshi/Seriallog.txt", readBuffer2, strlen(readBuffer2), "COM2 Recieved", 0);
+                 //if (reply432read.size() < 2 || reply432read.substr(reply432read.size() - 2) != "\r\n")
+                 //   {
+                 //       reply432read += "\r\n";//这里需要删除，本身读的数据已经有了
+                 //   }
                 reply432read = "$432readDSP:" + reply432read;
                 sendReply("COM6", reply432read);
             }
@@ -373,7 +397,8 @@ void processSYZCommand(const std::string& command) {
     std::string reply432;
     
 
-    if (command.find("$SMSN,ON,0") != std::string::npos) {
+    if (command.find("$SMSN,ON,0") != std::string::npos) 
+    {
         reply = "$SMSN,ONOK,1*";
         reply += calculateChecksum(reply) + "\r\n";
         sendReply("COM6", reply);
@@ -470,7 +495,7 @@ void processSYZCommand(const std::string& command) {
         reply432 += calculateChecksum(reply432) + "\r\n";
         sendToNextLevel("COM10", reply432);
     }
-    else if (command.find("$HXXB,WAR,1") != std::string::npos) {
+    /*else if (command.find("$HXXB,WAR,1") != std::string::npos) {
         reply = "$HXXB,REV,1*";
         reply += calculateChecksum(reply) + "\r\n";
         sendReply("COM6", reply);
@@ -485,15 +510,16 @@ void processSYZCommand(const std::string& command) {
         reply432 = "$HXXB,OFF,1*";
         reply432 += calculateChecksum(reply432) + "\r\n";
         sendToNextLevel("COM10", reply432);
-        }
+        }*/
     else if (command.find("$SMSN,XINXI,1") != std::string::npos) {
         reply = "$SMSN,XINXI,0*";
         reply += calculateChecksum(reply) + "\r\n";
         sendReply("COM6", reply);
+
         if (sendBuffer[0] == '\0')
                {
                 char sendBuffer1[] = "No Sonar Message\r\n";
-                serialPort.write(sendBuffer1, 19, bytesWritten1);
+                serialPort.write(sendBuffer1, 18, bytesWritten1);
                }
                else
                {
@@ -530,6 +556,7 @@ void sendReply(const std::string& portName, const std::string& message) {
     uint32_t baudrate = 115200;  // 根据需要调整波特率
     const char* buffer = message.c_str();
     serialPort.write(buffer, strlen(buffer), bytesWritten1);
+    saveData("D:/ceshi/Seriallog.txt", buffer, strlen(buffer), "COM1 Tran", 0);
     //uartPort6_.write(reinterpret_cast<const uint8_t*>(message.c_str()), message.size(),115200);
 }
 
@@ -537,5 +564,6 @@ void sendToNextLevel(const std::string& portName, const std::string& message) {
     uint32_t baudrate = 115200;  // 根据需要调整波特率
     const char* buffer = message.c_str();
     serialPort2.write(buffer, strlen(buffer), bytesWritten2);
+    saveData("D:/ceshi/Seriallog.txt", buffer, strlen(buffer), "COM2 Send", 0);
     //uartPort10_.write(reinterpret_cast<const uint8_t*>(message.c_str()), message.size(), ConnectionMeta(115200));
 }

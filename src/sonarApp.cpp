@@ -23,6 +23,8 @@
 #include <windows.h> // 包含 Windows API 头文件
 #include <mutex>
 #include <opencv2/opencv.hpp>
+#include "data_logger.h"
+#include "array_data.h"
 //#include "global.h"
 // 在类中添加一个标志来表示是否开始了 ping data 的记录
 bool isRecording = false;
@@ -30,19 +32,31 @@ std::string dataFolder_;  // 文件夹路径
 using namespace IslSdk;
 unsigned char mesbag[28] = { 0 };
 std::mutex uartMutex;
-const int ROWS = 152; // 行数
-const int COLS = 20;  // 列数
+const int ROWS = 160; // 行数
+const int COLS = 101;  // 列数
 float shanxing[ROWS][COLS] = { 0 }; // 初始化为 0
 float frame1[ROWS][COLS] = { 0 }; // 初始化为 0
 float frame2[ROWS][COLS] = { 0 }; // 初始化为 0
+float frame3[ROWS][COLS] = { 0 }; // 初始化为 0
+float frame4[ROWS][COLS] = { 0 }; // 初始化为 0
 float* currentFrame = &frame1[0][0]; // 指向 frame1 的首地址
 float* nextFrame = &frame2[0][0];   // 指向 frame2 的首地址
+// 最边角角度定义
+const float START_ANGLE = 315; // 扇形开始边角
+const float END_ANGLE = 45.0;    // 扇形结束边角
+const float ANGLE_TOLERANCE = 0.5; // 容差范围 ±1度
+bool isCollecting = false; // 数据采集标志
 // 定义全局变量
 Message  msg;
+extern SerialPort serialPort; // 声明全局变量
 extern SerialPort serialPort2; // 声明全局变量
 int bytesWritten12;
+int bytesWritten21;
+char writeBufferimage[] = "Image detection ready!\r\n";
 char writeBufferjinggao[] = "$HXXB,WAR,1*CK\r\n";
 char writeBufferxiaoshi[] = "$HXXB,OFF,1*CK\r\n";
+char writeBufferjingzhi[] = "It may be a stationary target\r\n";
+
 std::string IslSdk::messageToString(const Message& msg)
 {
     std::ostringstream oss;
@@ -182,15 +196,15 @@ SonarApp::SonarApp(void) : App("SonarApp"), m_pingCount(0), m_scanning(false), s
         "i -> Save sonar image" NEW_LINE
         "q -> FasongDabaoxinxi" NEW_LINE);
     //自动运行
-    //std::thread([this]() {
-    //    while(true){
-    //    std::this_thread::sleep_for(std::chrono::seconds(1)); // 等待1秒，确保设备已初始化
-    //    this->doTask('r', dataFolder_); // 开始扫描
-    //    std::this_thread::sleep_for(std::chrono::minutes(4)); // 等待4分钟
-    //    this->doTask('R', dataFolder_); // 停止扫描
-    //    std::this_thread::sleep_for(std::chrono::minutes(1)); // 等待4分钟
-    //    }
-    //    }).detach();
+    std::thread([this]() {
+        while(true){
+        std::this_thread::sleep_for(std::chrono::seconds(1)); // 等待1秒，确保设备已初始化
+        this->doTask('r', dataFolder_); // 开始扫描
+        //std::this_thread::sleep_for(std::chrono::minutes(4)); // 等待4分钟
+        //this->doTask('R', dataFolder_); // 停止扫描
+        //std::this_thread::sleep_for(std::chrono::minutes(1)); // 等待4分钟
+        }
+        }).detach();
     //std::this_thread::sleep_for(std::chrono::seconds(1)); // 等待1秒，确保设备已初始化
     //doTask('r', dataFolder_); // 开始扫描
 
@@ -380,7 +394,8 @@ void SonarApp::doTask(int_t key, const std::string& path)
             
             //serialPort22.open("COM2", 115200);
 
-            serialPort2.write(writeBufferjinggao, 16, bytesWritten12);
+           // serialPort2.write(writeBufferjinggao, 16, bytesWritten12);
+
             break;
 
         default:
@@ -416,6 +431,7 @@ void SonarApp::callbackGyroData(GyroSensor& gyro, const Vector3& v)
 {
     Debug::log(Debug::Severity::Info, name.c_str(), "Gyro x:%.2f, y:%.2f, z:%.2f", v.x, v.y, v.z);
 }
+
 //--------------------------------------------------------------------------------------------------
 void SonarApp::callbackAccelData(AccelSensor& accel, const Vector3& v)
 {
@@ -476,14 +492,11 @@ void SonarApp::callbackPingData(Sonar& iss360, const Sonar::Ping& ping)
         // 记录数据到文件
         recordPingData(iss360, ping, txPulseLengthMm);
         m_pingCount++;
- 
-       // sendUartData("COM4", 115200, data1);
+
+        // sendUartData("COM4", 115200, data1);
         if (m_pingCount % (Sonar::maxAngle / iss360.settings.setup.stepSize) == 0)
         {
             m_pingCount = 0;
-      
-
-         
             /*
             m_texture.renderTexture(sonarDataStore, m_palette, false);
             BmpFile::save("snrTex.bmp", reinterpret_cast<const uint32_t*>(&m_texture.buf[0]), 32, m_texture.width, m_texture.height);
@@ -492,24 +505,30 @@ void SonarApp::callbackPingData(Sonar& iss360, const Sonar::Ping& ping)
             BmpFile::save("snrCi.bmp", reinterpret_cast<const uint32_t*>(&m_circular.buf[0]), 32, m_circular.width, m_circular.height);
             */
         }
+        
         if (flag_shanxing == 1)
         {
             jishu_shanxing = jishu_shanxing + 1;
+            if (jishu_shanxing == 1)
+            {
+                memcpy(frame4, shanxing, sizeof(shanxing));
+            }
             //将矩阵数据转换为图像数据
             //frame1 = frame2;
             //std::swap(currentFrame, nextFrame);
-            memcpy(frame1, frame2, sizeof(frame1));
-            memcpy(frame2, shanxing, sizeof(shanxing));
-            /* for (int i = 0; i < ROWS; i++) {
-                 for (int j = 0; j < COLS; j++) {
-                     frame2[i][j] = frame1[i][j];
-                 }
-             }*/
-             //for (int i = 0; i < ROWS; i++) {
-             //    for (int j = 0; j < COLS; j++) {
-             //        frame2[i][j] = shanxing[i][j];
-             //    }
-             //}
+            if (flag_yundong == 0 && flag_jingzhi == 1)//有目标状态下的监测
+            {
+                memcpy(frame1, frame3, sizeof(frame1));
+                memcpy(frame2, shanxing, sizeof(shanxing));
+
+            }
+            if (flag_yundong == 1 && flag_jingzhi == 0)//无目标状态下的监测
+            {
+                memcpy(frame1, frame2, sizeof(frame1));
+                memcpy(frame2, shanxing, sizeof(shanxing));
+            }
+
+
              //frame2 = shanxing;
             flag_shanxing = 0;
             // 将二维数组转换为 cv::Mat
@@ -520,25 +539,113 @@ void SonarApp::callbackPingData(Sonar& iss360, const Sonar::Ping& ping)
             cv::Mat frame11Display, frame22Display;
             cv::normalize(frame11, frame11Display, 0, 255, cv::NORM_MINMAX, CV_8UC1);
             cv::normalize(frame22, frame22Display, 0, 255, cv::NORM_MINMAX, CV_8UC1);
-            // 显示图像
-            cv::imshow("Frame11", frame11Display);
-            cv::imshow("Frame22", frame22Display);
-            cv::waitKey(0); // 保持窗口打开
+            // 缩放比例
+            double scale = 2.0;
+            // 检查图像是否为空
+            if (frame22Display.empty()) {
+                std::cerr << "Error: frame22Display is empty!" << std::endl;
+                return;
+            }
+
+            // 如果是三通道彩色图像，转换为灰度图像
+            if (frame22Display.channels() == 3) {
+                cv::cvtColor(frame22Display, frame22Display, cv::COLOR_BGR2GRAY);
+            }
+            //cv::imshow("Frame22", frame22Display);
+            //cv::waitKey(0); // 保持窗口打开
+            // 保存图像到文件
+
+            // 放大图像
+            cv::Mat frame11Resized, frame22Resized;
+            // cv::resize(frame11Display, frame11Resized, cv::Size(), scale, scale, cv::INTER_NEAREST);
+            cv::resize(frame22Display, frame22Resized, cv::Size(), scale, scale, cv::INTER_NEAREST);// 显示图像
+            // cv::imshow("Frame11", frame11Display);
+           // std::cout << "frame22 data: " << frame22Display << std::endl;
+            bool result = cv::imwrite("D:/ceshi/frame22_image.png", frame22Resized);
+            if (result) {
+                std::cout << "图像已保存到文件夹!" << std::endl;
+            }
+            else {
+                std::cerr << "保存图像失败!" << std::endl;
+            }
+            //cv::Mat color_frame11, color_frame22;
+            // cv::applyColorMap(frame11Display, color_frame11, cv::COLORMAP_JET); // 使用伪彩色
+            //cv::applyColorMap(frame22Display, color_frame22, cv::COLORMAP_JET); // 使用伪彩色
+            //cv::imshow("Frame22", color_frame22);
+            //saveShanxingToFile(&frame22Display, ROWS, COLS, "frame22Display_data.csv");
+            // }
+          
+            // 
             //图像处理
-            if(jishu_shanxing > 1)
-            { 
-                //process_frame_difference(frame11，frame22);//数据处理
+            if (jishu_shanxing > 1)
+            {
+                int no_target = 0;  // 初始化无目标标志
+                int no_target1 = 0;  // 初始化无目标标志
+                Centroid centroid;  // 初始化质心结构体
+
+                if(jishu_shanxing==2|| jishu_shanxing == 3)
+                {
+                serialPort.write(writeBufferimage, 24, bytesWritten21);
+                saveData("D:/ceshi/Seriallog.txt", writeBufferimage, strlen(writeBufferimage), "COM1 Send", 0);
+                }
+                // 调用 process_frame_difference 函数
+                int result = process_frame_difference(frame11Display, frame22Display, no_target, centroid);//数据处理
+                flag_target = no_target;
+                if(flag_zhiling ==0)
+                { 
+                    cv::Mat frame44 = cv::Mat(ROWS, COLS, CV_32FC1, frame4).clone();
+
+                    // 归一化到 0~255 方便显示
+                    cv::Mat frame44Display;
+                    cv::normalize(frame44, frame44Display, 0, 255, cv::NORM_MINMAX, CV_8UC1);
+                    int result2 = process_frame_difference(frame44Display, frame22Display, no_target1, centroid);//数据处理
+                    flag_beijing = no_target1;
+                    memcpy(frame3, frame2, sizeof(frame3));
+                    if (flag_target == 0&& flag_beijing ==1)
+                    {
+                        flag_target = 1;
+                        jishu_guding++;
+                        if (jishu_guding > 20)
+                        {
+                            serialPort.write(writeBufferxiaoshi, 16, bytesWritten21);
+                            serialPort2.write(writeBufferxiaoshi, 16, bytesWritten12);
+                            saveData("D:/ceshi/Seriallog.txt", writeBufferxiaoshi, strlen(writeBufferxiaoshi), "COM1 Send jingzhi", 0);
+                            serialPort.write(writeBufferjingzhi, 31, bytesWritten21);
+                            serialPort2.write(writeBufferjingzhi, 31, bytesWritten12);
+                            saveData("D:/ceshi/Seriallog.txt", writeBufferjingzhi, strlen(writeBufferjingzhi), "COM1 Send jinagao", 0);
+                            memcpy(frame4, frame2, sizeof(frame4));
+                            flag_jingzhi = 0;
+                            flag_yundong = 1;
+                            jishu_guding = 0;
+                            flag_zhiling = 1;
+                            flag_target = 0;
+                        }
+                    }
+                }
+                
+
+
+           
             }
             //报警设置
             if (flag_target == 1 && flag_zhiling == 1)
             {
 
                 //serialPort2.open("COM2", 115200);
-               
+
                 // int bytesWritten1;
                  //char writeBuffer[] = "$HXXB,WAR,1*CK\r\n";
+                serialPort.write(writeBufferjinggao, 16, bytesWritten21);
+                saveData("D:/ceshi/Seriallog.txt", writeBufferjinggao, strlen(writeBufferjinggao), "COM1 Send jinagao", 0);
                 serialPort2.write(writeBufferjinggao, 16, bytesWritten12);
+                if (flag_zhiling == 1)
+                {
+                    memcpy(frame3, frame1, sizeof(frame1));
+                }
                 flag_zhiling = 0;
+                flag_jingzhi = 1;
+                flag_yundong = 0;
+
             }
             if (flag_target == 0 && flag_zhiling == 0)
             {
@@ -546,9 +653,18 @@ void SonarApp::callbackPingData(Sonar& iss360, const Sonar::Ping& ping)
                 //serialPort22.open("COM2", 115200);
                 //int bytesWritten1;
                // char writeBuffer[] = "$HXXB,OFF,1*CK\r\n";
+                serialPort.write(writeBufferxiaoshi, 16, bytesWritten21);
+                saveData("D:/ceshi/Seriallog.txt", writeBufferxiaoshi, strlen(writeBufferxiaoshi), "COM1 Send xiaoshi", 0);
                 serialPort2.write(writeBufferxiaoshi, 16, bytesWritten12);
+
                 flag_zhiling = 1;
+                flag_jingzhi=0;
+                flag_yundong = 1;
             }
+
+
+
+
         }
     }
 }
@@ -571,13 +687,9 @@ void SonarApp::callbackPwrAndTemp(Sonar& iss360, const Sonar::CpuPowerTemp& data
 
 void SonarApp::recordPingData(const Sonar& iss360, const Sonar::Ping& ping,uint_t txPulseLengthMm)
 {
-    if (currentCol >= COLS)
-    {
-        std::cerr << "Array full, cannot store more data." << std::endl;
-        currentCol = 0; // 或者重置 currentCol = 0; 来覆盖数据
-        std::memset(shanxing, 0, sizeof(shanxing));
-        std::cerr << "Array clear all data." << std::endl;
-    }
+    //先判断是否采集shanxing数据
+
+
     Device::Info adevice;
     msis_pkg::RangeImageBeam temp_ping_;
     temp_ping_.angle_du = float(ping.angle) * 360 / 12800;
@@ -589,7 +701,35 @@ void SonarApp::recordPingData(const Sonar& iss360, const Sonar::Ping& ping,uint_
     for (int i_ = 0; i_ < ping.data.size(); i_++) {
         temp_ping_.beam_data.push_back(ping.data[i_]);
     }
+    // 计算当前角度
+    float current_angle = float(ping.angle) * 360 / 12800;
+    // 判断是否接近起始边角 (315°)
+    if (!isCollecting && std::abs(current_angle - START_ANGLE) <= ANGLE_TOLERANCE)
+    {
+        std::cout << "Starting data collection at angle: " << current_angle << " degrees." << std::endl;
+        isCollecting = true;
+        
+    }
+   
+        // 判断当前角度是否在合法范围 (315° ~ 45°)
+        if (current_angle < 315.0 && current_angle>45)
+       {
+            //isValidAngle = false;
+            isCollecting = false;
+            std::memset(shanxing, 0, sizeof(shanxing));
+            currentCol = 0; // 或者重置 currentCol = 0; 来覆盖数据
+       }
 
+
+    if (isCollecting)
+    { 
+    if (currentCol >= COLS)
+    {
+        std::cerr << "Array full, cannot store more data." << std::endl;
+        currentCol = 0; // 或者重置 currentCol = 0; 来覆盖数据
+        std::memset(shanxing, 0, sizeof(shanxing));
+        std::cerr << "Array clear all data." << std::endl;
+    }
     // 将 ping.data 存储到 shanxing 数组的当前列
     for (int i = 0; i < ping.data.size() && i < ROWS; ++i) {
         shanxing[i][currentCol] = static_cast<float>(ping.data[i]);
@@ -600,18 +740,23 @@ void SonarApp::recordPingData(const Sonar& iss360, const Sonar::Ping& ping,uint_
     {
         //jushu_shanxing++;
         flag_shanxing = 1;
-        std::cout << "Displaying shanxing matrix:" << std::endl;
-
-        for (int i = 0; i < ROWS; ++i) {
-            for (int j = 0; j < COLS; ++j) {
-                // 设置固定宽度便于观察矩阵结构
-                std::cout << std::setw(5) << shanxing[i][j] << " ";
-            }
-            std::cout << std::endl; // 换行
-        }
-
-        std::cout << "End of matrix display." << std::endl;
-
+//        std::cout << "Displaying shanxing matrix:" << std::endl;
+//
+//        for (int i = 0; i < ROWS; ++i) {
+//            for (int j = 0; j < COLS; ++j) {
+//                // 设置固定宽度便于观察矩阵结构
+//                std::cout << std::setw(5) << shanxing[i][j] << " ";
+//            }
+//            std::cout << std::endl; // 换行
+//        }
+//
+//        std::cout << "End of matrix display." << std::endl;
+//        // 存储到文件
+//
+//
+////float shanxing[ROWS][COLS] = {0}; // 假设数据在这里
+//        saveShanxingToFile(&shanxing[0][0], ROWS, COLS, "shanxing_data.csv");
+    }
     }
     // 获取当前时间戳
     auto now = std::chrono::system_clock::now();
@@ -858,5 +1003,50 @@ void SonarApp::sendFormattedData
     memcpy(sendBuffer, messageStr.c_str(), 28);
     memset(&msg, 0, sizeof(msg));
 }
+void SonarApp::saveShanxingToFile(const float* shanxing, int rows, int cols, const std::string& filename)
+{
+    // 打开文件
+    std::ofstream file(filename);
 
+    if (!file.is_open()) {
+        std::cerr << "Failed to open file: " << filename << std::endl;
+        return;
+    }
 
+    // 遍历矩阵并写入文件
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            file << std::setw(10) << *(shanxing + i * cols + j); // 设置宽度对齐，便于观察
+            if (j < cols - 1) {
+                file << ","; // 列之间加空格分隔
+            }
+        }
+        file << "\n"; // 每行结束换行
+    }
+
+    file.close(); // 关闭文件
+    std::cout << "Shanxing data saved to " << filename << std::endl;
+}
+void SonarApp::saveMatToCSV(const cv::Mat& mat, const std::string& filename)
+{
+    // 打开输出文件流
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "Error: Cannot open file " << filename << " for writing." << std::endl;
+        return;
+    }
+
+    // 遍历每一行和每一列，将数据写入CSV
+    for (int i = 0; i < mat.rows; ++i) {
+        for (int j = 0; j < mat.cols; ++j) {
+            file << static_cast<int>(mat.at<uchar>(i, j));  // 由于是CV_8UC1，确保数据为uchar类型
+            if (j < mat.cols - 1) {
+                file << ",";  // 添加逗号分隔符
+            }
+        }
+        file << "\n";  // 换行
+    }
+
+    file.close();
+    std::cout << "Matrix saved to " << filename << std::endl;
+}

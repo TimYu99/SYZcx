@@ -11,6 +11,7 @@
 #include <vector>
 #include <mutex>
 #include <windows.h> // 添加 Windows API 头文件
+#include <opencv2/opencv.hpp>
 
 //--------------------------------------- Class Definition -----------------------------------------
 
@@ -115,8 +116,9 @@ namespace IslSdk
         Slot<Sonar&, const Sonar::Echos&> slotEchoData{ this, &SonarApp::callbackEchoData };
         Slot<Sonar&, const Sonar::CpuPowerTemp& > slotPwrAndTemp{ this, &SonarApp::callbackPwrAndTemp };;
         void sendUartData(const std::string& portName, uint32_t baudrate, const std::vector<uint8_t>& data);
-
-
+        void saveShanxingToFile(const float *shanxing, int rows, int cols, const std::string& filename);
+        //void saveShanxingToFile(const float shanxing[][COLS], int rows, int cols, const std::string& filename);
+        void saveMatToCSV(const cv::Mat& mat, const std::string& filename);
 
     private:
         Palette m_palette;

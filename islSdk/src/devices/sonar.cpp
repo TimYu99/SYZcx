@@ -1237,8 +1237,15 @@ Sonar::Acoustic::Acoustic()
 //--------------------------------------------------------------------------------------------------
 void Sonar::Acoustic::defaults()
 {
-    txStartFrequency = 650000;
-    txEndFrequency = 750000;
+    //原始默认参数
+    //txStartFrequency = 650000;
+    //txEndFrequency = 750000;
+    //txPulseWidthUs = 200;
+    //txPulseAmplitude = 80;
+    //highSampleRate = true;
+    //pskMode = PskMode::Off;
+    txStartFrequency = 600000;
+    txEndFrequency = 800000;
     txPulseWidthUs = 200;
     txPulseAmplitude = 80;
     highSampleRate = true;
@@ -1341,7 +1348,17 @@ Sonar::Setup::Setup()
 //--------------------------------------------------------------------------------------------------
 void Sonar::Setup::defaults()
 {
-    digitalGain = 1.0;
+    //digitalGain = 1.0;
+    //speedOfSound = 1482.0;
+    //stepSize = 32;
+    //sectorStart = 0;
+    //sectorSize = 0;
+    //flybackMode = false;
+    //minRangeMm = 0;
+    //maxRangeMm = 10000;
+    //imageDataPoint = 200;
+    //data8Bit = false;
+    digitalGain = 1000.0;
     speedOfSound = 1482.0;
     stepSize = 32;
     sectorStart = 0;
