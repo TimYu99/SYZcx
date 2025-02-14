@@ -5,7 +5,7 @@
 // 全局变量定义
 uint16_t globalPn = 0;
 uint16_t globalSn = 0;
-uint8_t globalstatus = 0x0F;
+uint8_t globalstatus = 0x00;
 uint16_t globalangle = 0;
 uint8_t globalspeed = 0;
 uint8_t globalminrange = 0;

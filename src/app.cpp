@@ -3,8 +3,10 @@
 #include "app.h"
 #include "platform/debug.h"
 #include "global.h" // 包含 global.h
+#include "data_logger.h"
 using namespace IslSdk;
-
+char sonar1[] = "sonar1 \r\n";
+char sonar2[] = "sonar2 \r\n";
 //--------------------------------------------------------------------------------------------------
 App::App(const std::string& name) : name(name), m_device(nullptr)
 {
@@ -71,15 +73,19 @@ void App::callbackConnect(Device& device)
     globalSn = device.info.sn;
     if (globalPn == 2255 && globalSn == 10)
     {
-        globalstatus = 0x01; // 设置 Bit0 为 1
+        globalstatus = 0x02; // 设置 Bit1 为 1
+
+        saveData("D:/ceshi/Seriallog.txt", sonar2, strlen(sonar2), "Work:", 0);
     }
     else if (globalPn == 2254 && globalSn == 25)
     {
-        globalstatus = 0x02; // 设置 Bit0 为 1
+        globalstatus = 0x01; // 设置 Bit0 为 1
+        saveData("D:/ceshi/Seriallog.txt", sonar1, strlen(sonar1), "Work:", 0);
     }
     else {
-        globalstatus = 0x0F; // 设成默认值
+        globalstatus = 0x00; // 设成默认值
     }
+
     connectEvent(device);
 }
 //--------------------------------------------------------------------------------------------------

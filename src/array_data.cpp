@@ -48,13 +48,21 @@ int process_frame_difference(cv::Mat frame1, cv::Mat frame2,int& no_target, Cent
     else {
         std::cerr << "保存图像失败!" << std::endl;
     }
-    // 后处理：形态学操作去噪
+
+    // 后处理：形态学操作去噪2025年2月13日修改
     cv::Mat cleaned_image1;
-    cv::Mat se1 = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(4, 4));
+    cv::Mat se1 = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(5, 5));
     cv::morphologyEx(binary_image, cleaned_image1, cv::MORPH_OPEN, se1);
     cv::Mat cleaned_image;
-    cv::Mat se = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
+    cv::Mat se = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(4, 4));
     cv::morphologyEx(binary_image, cleaned_image, cv::MORPH_OPEN, se);
+    // 后处理：形态学操作去噪
+    //cv::Mat cleaned_image1;
+    //cv::Mat se1 = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(4, 4));
+    //cv::morphologyEx(binary_image, cleaned_image1, cv::MORPH_OPEN, se1);
+    //cv::Mat cleaned_image;
+    //cv::Mat se = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
+    //cv::morphologyEx(binary_image, cleaned_image, cv::MORPH_OPEN, se);
     bool result1 = cv::imwrite("D:/ceshi/cleaned_image.png", cleaned_image);
     if (result1) {
         std::cout << "cleaned_image图像已保存到文件夹!" << std::endl;
