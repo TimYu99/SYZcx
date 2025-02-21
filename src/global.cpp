@@ -33,3 +33,5 @@ int flag_beijing = 0;    // 默认未执行指令
 //计数器
 int jishu_shanxing =0;
 int jishu_guding=0;
+int jishu_mubiao = 0;
+int jishi_mubiao = 0;

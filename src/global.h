@@ -33,5 +33,6 @@ extern int flag_beijing;	// 标志位 1: 与背景比有目标, 0: 与背景比无目标
 //计数器
 extern int jishu_shanxing;
 extern int jishu_guding;
-
+extern int jishu_mubiao;
+extern int jishi_mubiao;
 #endif // GLOBAL_H

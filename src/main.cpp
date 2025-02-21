@@ -52,6 +52,7 @@ void portDeleted(SysPort& sysPort);
 
 //串口处理函数
 void processSYZCommand(const std::string& command);
+void processDSPCommand(const std::string& command);
 void sendReply(const std::string& portName, const std::string& message);
 std::string calculateChecksum(const std::string& message);
 void sendToNextLevel(const std::string& portName, const std::string& message);
@@ -179,6 +180,7 @@ int main(int argc, char** argv)
                  //       reply432read += "\r\n";//这里需要删除，本身读的数据已经有了
                  //   }
                 reply432read = "$432readDSP:" + reply432read;
+                processDSPCommand(readBuffer2);
                 //sendReply("COM6", reply432read);
             }
             
@@ -577,6 +579,21 @@ void processSYZCommand(const std::string& command)
 
 
 
+}
+void processDSPCommand(const std::string& command)
+{
+    std::string reply;
+    //std::string reply432;
+
+
+    if (command.find("$HXXB,FSKGOT") != std::string::npos)
+    {
+        reply = "$HXXB,FSKGOT";
+        reply += calculateChecksum(reply) + "\r\n";
+        sendReply("COM6", reply);
+        
+    }
+ 
 }
 std::string calculateChecksum(const std::string& message)
 {

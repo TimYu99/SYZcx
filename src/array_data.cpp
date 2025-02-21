@@ -6,6 +6,8 @@
 #include <vector>
 #include <cmath>
 #include <opencv2/opencv.hpp>
+#include <ctime>
+#include <sstream>
 // 全局数组定义和初始化
 //const int rows = 379;
 //const int cols = 401;
@@ -54,7 +56,7 @@ int process_frame_difference(cv::Mat frame1, cv::Mat frame2,int& no_target, Cent
     cv::Mat se1 = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(5, 5));
     cv::morphologyEx(binary_image, cleaned_image1, cv::MORPH_OPEN, se1);
     cv::Mat cleaned_image;
-    cv::Mat se = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(4, 4));
+    cv::Mat se = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(4, 3));
     cv::morphologyEx(binary_image, cleaned_image, cv::MORPH_OPEN, se);
     // 后处理：形态学操作去噪
     //cv::Mat cleaned_image1;
@@ -101,7 +103,9 @@ int process_frame_difference(cv::Mat frame1, cv::Mat frame2,int& no_target, Cent
     // 选取第一个质心作为目标
     centroid = centroids.front();
     no_target = 1;  // 目标已检测到
-    
+    // 保存图像
+    saveImageWithTimestamp1(cleaned_image1);
+    saveImageWithTimestamp(cleaned_image);
     if (last_centroid.x != 0 && last_centroid.y != 0) {  // 如果上一帧存在有效的质心
         float distance = std::sqrt(std::pow(centroid.x - last_centroid.x, 2) + std::pow(centroid.y - last_centroid.y, 2));
 
@@ -206,4 +210,56 @@ std::vector<int> getColumnData(double angle) {
         //columnData[i] = beijingtu21[i][colIndex];
     }
     return columnData;
+}
+void saveImageWithTimestamp(const cv::Mat& image) {
+    // 获取当前时间
+    std::time_t now = std::time(nullptr);
+    std::tm* now_tm = std::localtime(&now);
+
+    // 格式化时间戳
+    std::ostringstream oss;
+    oss << "D:/mubiao/target_"
+        << (now_tm->tm_year + 1900) << "-"
+        << (now_tm->tm_mon + 1) << "-"
+        << now_tm->tm_mday << "_"
+        << now_tm->tm_hour << "-"
+        << now_tm->tm_min << "-"
+        << now_tm->tm_sec << ".png";
+
+    std::string filename = oss.str();
+
+    // 保存图像
+    bool result2 = cv::imwrite(filename, image);
+    if (result2) {
+        std::cout << "图像已保存到文件: " << filename << std::endl;
+    }
+    else {
+        std::cerr << "保存图像失败!" << std::endl;
+    }
+}
+void saveImageWithTimestamp1(const cv::Mat& image) {
+    // 获取当前时间
+    std::time_t now = std::time(nullptr);
+    std::tm* now_tm = std::localtime(&now);
+
+    // 格式化时间戳
+    std::ostringstream oss;
+    oss << "D:/mubiao/target1_"
+        << (now_tm->tm_year + 1900) << "-"
+        << (now_tm->tm_mon + 1) << "-"
+        << now_tm->tm_mday << "_"
+        << now_tm->tm_hour << "-"
+        << now_tm->tm_min << "-"
+        << now_tm->tm_sec << ".png";
+
+    std::string filename = oss.str();
+
+    // 保存图像
+    bool result2 = cv::imwrite(filename, image);
+    if (result2) {
+        std::cout << "图像已保存到文件: " << filename << std::endl;
+    }
+    else {
+        std::cerr << "保存图像失败!" << std::endl;
+    }
 }
