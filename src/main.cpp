@@ -19,6 +19,7 @@
 #include "global.h"
 #include "comms/ports/uartPort.h"
 #include <regex>
+#include <chrono>
 
 using namespace IslSdk;
 //using namespace std;
@@ -537,7 +538,7 @@ void processSYZCommand(const std::string& command)
             sendToNextLevel("COM10", reply432);
         }
         }
-    /*else if (command.find("$HXXB,WAR,1") != std::string::npos) {
+    else if (command.find("$HXXB,WAR,1") != std::string::npos) {
         reply = "$HXXB,REV,1*";
         reply += calculateChecksum(reply) + "\r\n";
         sendReply("COM6", reply);
@@ -552,7 +553,7 @@ void processSYZCommand(const std::string& command)
         reply432 = "$HXXB,OFF,1*";
         reply432 += calculateChecksum(reply432) + "\r\n";
         sendToNextLevel("COM10", reply432);
-        }*/
+        }
     else if (command.find("$SMSN,XINXI,1") != std::string::npos) {
         reply = "$SMSN,XINXI,0*";
         reply += calculateChecksum(reply) + "\r\n";
@@ -624,5 +625,7 @@ void sendToNextLevel(const std::string& portName, const std::string& message) {
     const char* buffer = message.c_str();
     serialPort2.write(buffer, strlen(buffer), bytesWritten2);
     saveData("D:/ceshi/Seriallog.txt", buffer, strlen(buffer), "COM2 Send", 0);
+    // 处理完后暂停1秒
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     //uartPort10_.write(reinterpret_cast<const uint8_t*>(message.c_str()), message.size(), ConnectionMeta(115200));
 }
