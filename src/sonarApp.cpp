@@ -33,18 +33,18 @@ using namespace IslSdk;
 unsigned char mesbag[28] = { 0 };
 std::mutex uartMutex;
 // 90°扇形最边角角度定义/还有1处在764行附近修改
-const float START_ANGLE = 315; // 扇形开始边角
-const float END_ANGLE = 45.0;    // 扇形结束边角
-const float ANGLE_TOLERANCE = 0.5; // 容差范围 ±1度
-const int ROWS = 160; // 行数
-const int COLS = 101;  // 列数
- 
-////180°扇形最边角角度定义
-//const float START_ANGLE = 270; // 扇形开始边角
-//const float END_ANGLE = 90;    // 扇形结束边角
+//const float START_ANGLE = 315; // 扇形开始边角
+//const float END_ANGLE = 45.0;    // 扇形结束边角
 //const float ANGLE_TOLERANCE = 0.5; // 容差范围 ±1度
 //const int ROWS = 160; // 行数
-//const int COLS = 201;  // 列数
+//const int COLS = 101;  // 列数
+ 
+////180°扇形最边角角度定义
+const float START_ANGLE = 270; // 扇形开始边角
+const float END_ANGLE = 90;    // 扇形结束边角
+const float ANGLE_TOLERANCE = 0.5; // 容差范围 ±1度
+const int ROWS = 160; // 行数
+const int COLS = 201;  // 列数
 
 float shanxing[ROWS][COLS] = { 0 }; // 初始化为 0
 float frame1[ROWS][COLS] = { 0 }; // 初始化为 0
@@ -61,12 +61,21 @@ extern SerialPort serialPort; // 声明全局变量
 extern SerialPort serialPort2; // 声明全局变量
 int bytesWritten12;
 int bytesWritten21;
+
+////实验站
+//char writeBufferimage[] = "Image detection ready!\r\n";
+//char writeBufferjinggao[] = "$HXXB,WAR,1*CK\r\n";
+//char writeBufferxiaoshi[] = "$HXXB,OFF,1*CK\r\n";
+char writeBufferjinggao2[] = "$HXXB,WAR,2*CK\r\n";
+char writeBufferxiaoshi2[] = "$HXXB,OFF,2*CK\r\n";
+//char writeBufferjingzhi[] = "It may be a stationary target\r\n";
+
+//考古实验站
 char writeBufferimage[] = "Image detection ready!\r\n";
 char writeBufferjinggao[] = "$HXXB,WAR,1*CK\r\n";
 char writeBufferxiaoshi[] = "$HXXB,OFF,1*CK\r\n";
-char writeBufferjinggao2[] = "$HXXB,WAR,2*CK\r\n";
-char writeBufferxiaoshi2[] = "$HXXB,OFF,2*CK\r\n";
 char writeBufferjingzhi[] = "It may be a stationary target\r\n";
+
 int first_mubao = 0;
 int sec_mubao = 0;
 int chazhi_mubiao = 0;
@@ -652,25 +661,52 @@ void SonarApp::callbackPingData(Sonar& iss360, const Sonar::Ping& ping)
                         jishu_guding++;
                         if (jishu_guding > 15)
                         {
+                            //实验站
+                            //if (globalPn == 2255 && globalSn == 10)
+                            //{
+                            //    //serialPort.write(writeBufferxiaoshi, 16, bytesWritten21);
+                            //    //serialPort2.write(writeBufferxiaoshi2, 16, bytesWritten12);
+                            //    saveData("D:/ceshi/Seriallog.txt", writeBufferxiaoshi2, strlen(writeBufferxiaoshi2), "COM2 Send jingzhi2", 0);
+                            //    //serialPort.write(writeBufferjingzhi, 31, bytesWritten21);
+                            //    //serialPort2.write(writeBufferjingzhi, 31, bytesWritten12);
+                            //    saveData("D:/ceshi/Seriallog.txt", writeBufferjingzhi, strlen(writeBufferjingzhi), "COM1 Send jingzhi2", 0);
+                            //}
+                            //else if (globalPn == 2254 && globalSn == 25)
+                            //{
+                            //    // serialPort.write(writeBufferxiaoshi, 16, bytesWritten21);
+                            //    // serialPort2.write(writeBufferxiaoshi, 16, bytesWritten12);
+                            //    saveData("D:/ceshi/Seriallog.txt", writeBufferxiaoshi, strlen(writeBufferxiaoshi), "COM2 Send jingzhi1", 0);
+                            //    //serialPort.write(writeBufferjingzhi, 31, bytesWritten21);
+                            //   // serialPort2.write(writeBufferjingzhi, 31, bytesWritten12);
+                            //    saveData("D:/ceshi/Seriallog.txt", writeBufferjingzhi, strlen(writeBufferjingzhi), "COM1 Send jingzhi1", 0);
+                            //}
+                            ////考古实验站双声纳
+                            //if (globalPn == 2255 && globalSn == 10)
+                            //{
+                            //    serialPort.write(writeBufferxiaoshi, 16, bytesWritten21);
+                            //    //serialPort2.write(writeBufferxiaoshi2, 16, bytesWritten12);
+                            //    saveData("D:/ceshi/Seriallog.txt", writeBufferxiaoshi2, strlen(writeBufferxiaoshi2), "COM2 Send jingzhi2", 0);
+                            //    //serialPort.write(writeBufferjingzhi, 31, bytesWritten21);
+                            //    //serialPort2.write(writeBufferjingzhi, 31, bytesWritten12);
+                            //    saveData("D:/ceshi/Seriallog.txt", writeBufferjingzhi, strlen(writeBufferjingzhi), "COM1 Send jingzhi2", 0);
+                            //}
+                            //else if (globalPn == 2254 && globalSn == 25)
+                            //{
+                            //     serialPort.write(writeBufferxiaoshi, 16, bytesWritten21);
+                            //    // serialPort2.write(writeBufferxiaoshi, 16, bytesWritten12);
+                            //    saveData("D:/ceshi/Seriallog.txt", writeBufferxiaoshi, strlen(writeBufferxiaoshi), "COM2 Send jingzhi1", 0);
+                            //    //serialPort.write(writeBufferjingzhi, 31, bytesWritten21);
+                            //   // serialPort2.write(writeBufferjingzhi, 31, bytesWritten12);
+                            //    saveData("D:/ceshi/Seriallog.txt", writeBufferjingzhi, strlen(writeBufferjingzhi), "COM1 Send jingzhi1", 0);
+                            //}
+                            //考古实验站单声纳
+                            serialPort.write(writeBufferxiaoshi, 16, bytesWritten21);
+                            // serialPort2.write(writeBufferxiaoshi, 16, bytesWritten12);
+                            saveData("D:/ceshi/Seriallog.txt", writeBufferxiaoshi, strlen(writeBufferxiaoshi), "COM2 Send jingzhi", 0);
+                            //serialPort.write(writeBufferjingzhi, 31, bytesWritten21);
+                           // serialPort2.write(writeBufferjingzhi, 31, bytesWritten12);
+                            saveData("D:/ceshi/Seriallog.txt", writeBufferjingzhi, strlen(writeBufferjingzhi), "COM1 Send jingzhi", 0);
 
-                            if (globalPn == 2255 && globalSn == 10)
-                            {
-                                //serialPort.write(writeBufferxiaoshi, 16, bytesWritten21);
-                                //serialPort2.write(writeBufferxiaoshi2, 16, bytesWritten12);
-                                saveData("D:/ceshi/Seriallog.txt", writeBufferxiaoshi2, strlen(writeBufferxiaoshi2), "COM2 Send jingzhi2", 0);
-                                //serialPort.write(writeBufferjingzhi, 31, bytesWritten21);
-                                //serialPort2.write(writeBufferjingzhi, 31, bytesWritten12);
-                                saveData("D:/ceshi/Seriallog.txt", writeBufferjingzhi, strlen(writeBufferjingzhi), "COM1 Send jingzhi2", 0);
-                            }
-                            else if (globalPn == 2254 && globalSn == 25)
-                            {
-                                // serialPort.write(writeBufferxiaoshi, 16, bytesWritten21);
-                                // serialPort2.write(writeBufferxiaoshi, 16, bytesWritten12);
-                                saveData("D:/ceshi/Seriallog.txt", writeBufferxiaoshi, strlen(writeBufferxiaoshi), "COM2 Send jingzhi1", 0);
-                                //serialPort.write(writeBufferjingzhi, 31, bytesWritten21);
-                               // serialPort2.write(writeBufferjingzhi, 31, bytesWritten12);
-                                saveData("D:/ceshi/Seriallog.txt", writeBufferjingzhi, strlen(writeBufferjingzhi), "COM1 Send jingzhi1", 0);
-                            }
 
                             memcpy(frame4, frame2, sizeof(frame4));
                             flag_jingzhi = 0;
@@ -713,23 +749,42 @@ void SonarApp::callbackPingData(Sonar& iss360, const Sonar::Ping& ping)
                             //serialPort2.open("COM2", 115200);
 
                             // int bytesWritten1;
-                            if (globalPn == 2255 && globalSn == 10)
-                            {
-                                //serialPort.write(writeBufferjinggao2, 16, bytesWritten21);
-                                saveData("D:/ceshi/Seriallog.txt", writeBufferjinggao2, strlen(writeBufferjinggao2), "COM1 Send jinagao2", 0);
-                                serialPort2.write(writeBufferjinggao2, 16, bytesWritten12);
-                                saveData("D:/ceshi/Seriallog.txt", writeBufferjinggao2, strlen(writeBufferjinggao2), "COM2 Send jinagao2", 0);
-                            }
-                            else if (globalPn == 2254 && globalSn == 25)
-                            {
-                                //serialPort.write(writeBufferjinggao, 16, bytesWritten21);
-                                saveData("D:/ceshi/Seriallog.txt", writeBufferjinggao, strlen(writeBufferjinggao), "COM1 Send jinagao1", 0);
-                                serialPort2.write(writeBufferjinggao, 16, bytesWritten12);
-                                saveData("D:/ceshi/Seriallog.txt", writeBufferjinggao, strlen(writeBufferjinggao), "COM2 Send jinagao1", 0);
-                            }
+                            // 实验站
+                            //if (globalPn == 2255 && globalSn == 10)
+                            //{
+                            //    //serialPort.write(writeBufferjinggao2, 16, bytesWritten21);
+                            //    saveData("D:/ceshi/Seriallog.txt", writeBufferjinggao2, strlen(writeBufferjinggao2), "COM1 Send jinagao2", 0);
+                            //    serialPort2.write(writeBufferjinggao2, 16, bytesWritten12);
+                            //    saveData("D:/ceshi/Seriallog.txt", writeBufferjinggao2, strlen(writeBufferjinggao2), "COM2 Send jinagao2", 0);
+                            //}
+                            //else if (globalPn == 2254 && globalSn == 25)
+                            //{
+                            //    //serialPort.write(writeBufferjinggao, 16, bytesWritten21);
+                            //    saveData("D:/ceshi/Seriallog.txt", writeBufferjinggao, strlen(writeBufferjinggao), "COM1 Send jinagao1", 0);
+                            //    serialPort2.write(writeBufferjinggao, 16, bytesWritten12);
+                            //    saveData("D:/ceshi/Seriallog.txt", writeBufferjinggao, strlen(writeBufferjinggao), "COM2 Send jinagao1", 0);
+                            //}
                             //char writeBuffer[] = "$HXXB,WAR,1*CK\r\n";
-
-
+                            ////考古实验站双声纳
+                            //if (globalPn == 2255 && globalSn == 10)
+                            //{
+                            //    serialPort.write(writeBufferjinggao, 16, bytesWritten21);
+                            //    saveData("D:/ceshi/Seriallog.txt", writeBufferjinggao2, strlen(writeBufferjinggao2), "COM1 Send jinagao2", 0);
+                            //    //serialPort2.write(writeBufferjinggao2, 16, bytesWritten12);
+                            //    saveData("D:/ceshi/Seriallog.txt", writeBufferjinggao2, strlen(writeBufferjinggao2), "COM2 Send jinagao2", 0);
+                            //}
+                            //else if (globalPn == 2254 && globalSn == 25)
+                            //{
+                            //    serialPort.write(writeBufferjinggao, 16, bytesWritten21);
+                            //    saveData("D:/ceshi/Seriallog.txt", writeBufferjinggao, strlen(writeBufferjinggao), "COM1 Send jinagao1", 0);
+                            //    //serialPort2.write(writeBufferjinggao, 16, bytesWritten12);
+                            //    saveData("D:/ceshi/Seriallog.txt", writeBufferjinggao, strlen(writeBufferjinggao), "COM2 Send jinagao1", 0);
+                            //}
+                            //考古实验站
+                            serialPort.write(writeBufferjinggao, 16, bytesWritten21);
+                            saveData("D:/ceshi/Seriallog.txt", writeBufferjinggao, strlen(writeBufferjinggao2), "COM1 Send jinagao", 0);
+                            //serialPort2.write(writeBufferjinggao2, 16, bytesWritten12);
+                            saveData("D:/ceshi/Seriallog.txt", writeBufferjinggao, strlen(writeBufferjinggao2), "COM2 Send jinagao", 0);
 
                                 memcpy(frame3, frame1, sizeof(frame1));
                           
@@ -747,21 +802,42 @@ void SonarApp::callbackPingData(Sonar& iss360, const Sonar::Ping& ping)
                 //serialPort22.open("COM2", 115200);
                 //int bytesWritten1;
                // char writeBuffer[] = "$HXXB,OFF,1*CK\r\n";
-                if (globalPn == 2255 && globalSn == 10)
-                {
-                    //serialPort.write(writeBufferxiaoshi2, 16, bytesWritten21);
-                    saveData("D:/ceshi/Seriallog.txt", writeBufferxiaoshi2, strlen(writeBufferxiaoshi2), "COM1 Send xiaoshi2", 0);
-                    //serialPort2.write(writeBufferxiaoshi2, 16, bytesWritten12);
-                    saveData("D:/ceshi/Seriallog.txt", writeBufferxiaoshi2, strlen(writeBufferxiaoshi2), "COM2 Send xiaoshi2", 0);
-                }
-                else if (globalPn == 2254 && globalSn == 25)
-                {
-                    //serialPort.write(writeBufferxiaoshi, 16, bytesWritten21);
-                    saveData("D:/ceshi/Seriallog.txt", writeBufferxiaoshi, strlen(writeBufferxiaoshi), "COM1 Send xiaoshi1", 0);
-                    //serialPort2.write(writeBufferxiaoshi, 16, bytesWritten12);
-                    saveData("D:/ceshi/Seriallog.txt", writeBufferxiaoshi, strlen(writeBufferxiaoshi), "COM2 Send xiaoshi1", 0);
-                }
+                //实验站
+                //if (globalPn == 2255 && globalSn == 10)
+                //{
+                //    //serialPort.write(writeBufferxiaoshi2, 16, bytesWritten21);
+                //    saveData("D:/ceshi/Seriallog.txt", writeBufferxiaoshi2, strlen(writeBufferxiaoshi2), "COM1 Send xiaoshi2", 0);
+                //    //serialPort2.write(writeBufferxiaoshi2, 16, bytesWritten12);
+                //    saveData("D:/ceshi/Seriallog.txt", writeBufferxiaoshi2, strlen(writeBufferxiaoshi2), "COM2 Send xiaoshi2", 0);
+                //}
+                //else if (globalPn == 2254 && globalSn == 25)
+                //{
+                //    //serialPort.write(writeBufferxiaoshi, 16, bytesWritten21);
+                //    saveData("D:/ceshi/Seriallog.txt", writeBufferxiaoshi, strlen(writeBufferxiaoshi), "COM1 Send xiaoshi1", 0);
+                //    //serialPort2.write(writeBufferxiaoshi, 16, bytesWritten12);
+                //    saveData("D:/ceshi/Seriallog.txt", writeBufferxiaoshi, strlen(writeBufferxiaoshi), "COM2 Send xiaoshi1", 0);
+                //}
                 
+                //考古实验站
+                //if (globalPn == 2255 && globalSn == 10)
+                //{
+                //    serialPort.write(writeBufferxiaoshi, 16, bytesWritten21);
+                //    saveData("D:/ceshi/Seriallog.txt", writeBufferxiaoshi2, strlen(writeBufferxiaoshi2), "COM1 Send xiaoshi2", 0);
+                //    //serialPort2.write(writeBufferxiaoshi2, 16, bytesWritten12);
+                //    saveData("D:/ceshi/Seriallog.txt", writeBufferxiaoshi2, strlen(writeBufferxiaoshi2), "COM2 Send xiaoshi2", 0);
+                //}
+                //else if (globalPn == 2254 && globalSn == 25)
+                //{
+                //    serialPort.write(writeBufferxiaoshi, 16, bytesWritten21);
+                //    saveData("D:/ceshi/Seriallog.txt", writeBufferxiaoshi, strlen(writeBufferxiaoshi), "COM1 Send xiaoshi1", 0);
+                //    //serialPort2.write(writeBufferxiaoshi, 16, bytesWritten12);
+                //    saveData("D:/ceshi/Seriallog.txt", writeBufferxiaoshi, strlen(writeBufferxiaoshi), "COM2 Send xiaoshi1", 0);
+                //}
+                serialPort.write(writeBufferxiaoshi, 16, bytesWritten21);
+                saveData("D:/ceshi/Seriallog.txt", writeBufferxiaoshi, strlen(writeBufferxiaoshi), "COM1 Send xiaoshi", 0);
+                //serialPort2.write(writeBufferxiaoshi, 16, bytesWritten12);
+                saveData("D:/ceshi/Seriallog.txt", writeBufferxiaoshi, strlen(writeBufferxiaoshi), "COM2 Send xiaoshi", 0);
+
                 biaozhi = 0;
                 flag_zhiling = 1;
                 flag_jingzhi=0;
@@ -817,22 +893,22 @@ void SonarApp::recordPingData(const Sonar& iss360, const Sonar::Ping& ping,uint_
         
     }
    
-       ////  判断当前角度是否在合法范围 (315° ~ 45°)
-        if (current_angle < 315.0 && current_angle>45)
-       {
+       //////  判断当前角度是否在合法范围 (315° ~ 45°)
+       // if (current_angle < 315.0 && current_angle>45)
+       //{
+       //     //isValidAngle = false;
+       //     isCollecting = false;
+       //     std::memset(shanxing, 0, sizeof(shanxing));
+       //     currentCol = 0; // 或者重置 currentCol = 0; 来覆盖数据
+       //}
+         /*判断当前角度是否在合法范围 (270° ~ 90°)*/
+        if (current_angle < 270.0 && current_angle>90)
+        {
             //isValidAngle = false;
             isCollecting = false;
             std::memset(shanxing, 0, sizeof(shanxing));
             currentCol = 0; // 或者重置 currentCol = 0; 来覆盖数据
-       }
-         /*判断当前角度是否在合法范围 (270° ~ 90°)*/
-        //if (current_angle < 270.0 && current_angle>90)
-        //{
-        //    //isValidAngle = false;
-        //    isCollecting = false;
-        //    std::memset(shanxing, 0, sizeof(shanxing));
-        //    currentCol = 0; // 或者重置 currentCol = 0; 来覆盖数据
-        //}
+        }
 
     if (isCollecting)
     { 

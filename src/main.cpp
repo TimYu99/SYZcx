@@ -90,7 +90,8 @@ int main(int argc, char** argv)
     // Serial over Lan ports can be created using the following function, change the IP address and port to suit your needs
     // sdk.ports.createSol("SOL1", false, true, Utils::ipToUint(192, 168, 1, 215), 1001);
 
-    serialPort.open("COM1", 115200);
+    //serialPort.open("COM1", 115200);//实验站
+    serialPort.open("COM1", 9600);//考古实验站
     serialPort2.open("COM2", 115200);
     char writeBuffer[] = "$HXXB,WAR,1*CK\r\n";
     char sendBuffer1[] = "No Sonar Message\r\n";
@@ -128,7 +129,7 @@ int main(int argc, char** argv)
            if (sendBuffer[0] != '\0')
  
            {
-           serialPort.write(sendBuffer, 28, bytesWritten1);
+           //serialPort.write(sendBuffer, 28, bytesWritten1);
            //saveData("D:/ceshi/output.txt", sendBuffer, 28, "COM1 Send Hex Data", 1);
            }
         }
@@ -626,6 +627,6 @@ void sendToNextLevel(const std::string& portName, const std::string& message) {
     serialPort2.write(buffer, strlen(buffer), bytesWritten2);
     saveData("D:/ceshi/Seriallog.txt", buffer, strlen(buffer), "COM2 Send", 0);
     // 处理完后暂停1秒
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    //std::this_thread::sleep_for(std::chrono::seconds(1));
     //uartPort10_.write(reinterpret_cast<const uint8_t*>(message.c_str()), message.size(), ConnectionMeta(115200));
 }
